@@ -113,17 +113,19 @@ class WebFacadeImpl implements WebFacade {
         if (contentType && (contentType.contains("application/json") || contentType.contains("text/json"))) {
             JsonSlurper slurper = new JsonSlurper()
             Object jsonObj = null
-            try {
-                jsonObj = slurper.parse(new BufferedReader(new InputStreamReader(request.getInputStream(),
-                        request.getCharacterEncoding() ?: "UTF-8")))
-            } catch (Throwable t) {
-                logger.error("Error parsing HTTP request body JSON: ${t.toString()}", t)
-                jsonParameters = [_requestBodyJsonParseError:t.getMessage()]
-            }
-            if (jsonObj instanceof Map) {
-                jsonParameters = (Map<String, Object>) jsonObj
-            } else if (jsonObj instanceof List) {
-                jsonParameters = [_requestBodyJsonList:jsonObj]
+            if (request.getInputStream().available()) {
+                try {
+                    jsonObj = slurper.parse(new BufferedReader(new InputStreamReader(request.getInputStream(),
+                            request.getCharacterEncoding() ?: "UTF-8")))
+                } catch (Throwable t) {
+                    logger.error("Error parsing HTTP request body JSON: ${t.toString()}", t)
+                    jsonParameters = [_requestBodyJsonParseError:t.getMessage()]
+                }
+                if (jsonObj instanceof Map) {
+                    jsonParameters = (Map<String, Object>) jsonObj
+                } else if (jsonObj instanceof List) {
+                    jsonParameters = [_requestBodyJsonList:jsonObj]
+                }
             }
             // logger.warn("=========== Got JSON HTTP request body: ${jsonParameters}")
         }
